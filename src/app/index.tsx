@@ -1,98 +1,132 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
+import { useState } from 'react';
+import { Alert, FlatList, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import InfoCard from '@/components/InfoCard';
+import { useTheme } from '@/hooks/use-theme';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+const DAFTAR_MAHASISWA = [
+  { id: '1', nama: 'Alifia Putri', prodi: 'Sistem Informasi' },
+  { id: '2', nama: 'Bima Pratama', prodi: 'Teknik Informatika' },
+  { id: '3', nama: 'Citra Lestari', prodi: 'Manajemen' },
+  { id: '4', nama: 'Daffa Ramadhan', prodi: 'Teknik Sipil' },
+  { id: '5', nama: 'Eka Wulandari', prodi: 'Akuntansi' },
+];
 
 export default function HomeScreen() {
+  const [keyword, setKeyword] = useState('');
+  const theme = useTheme();
+  const mahasiswaTersaring = DAFTAR_MAHASISWA.filter((mahasiswa) =>
+    mahasiswa.nama.toLowerCase().includes(keyword.trim().toLowerCase())
+  );
+
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+      <FlatList
+        data={mahasiswaTersaring}
+        keyExtractor={(mahasiswa) => mahasiswa.id}
+        renderItem={({ item }) => (
+          <View style={[styles.studentCard, { backgroundColor: theme.backgroundElement }]}>
+            <Text style={[styles.studentName, { color: theme.text }]}>{item.nama}</Text>
+            <Text style={[styles.studentProgram, { color: theme.textSecondary }]}>{item.prodi}</Text>
+          </View>
+        )}
+        ListEmptyComponent={
+          <Text style={[styles.emptyMessage, { color: theme.textSecondary }]}>
+            Data tidak ditemukan!
+          </Text>
+        }
+        ListHeaderComponent={
+          <View style={styles.header}>
+            <Text style={[styles.heading, { color: theme.text }]}>Informasi Akademik</Text>
+            <InfoCard
+              title="Pengajuan KRS"
+              status="selesai"
+              onPress={() => Alert.alert('Pengajuan KRS', 'Pengajuan KRS telah selesai.')}
+            />
+            <InfoCard
+              title="Pembayaran UKT"
+              status="proses"
+              onPress={() => Alert.alert('Pembayaran UKT', 'Pembayaran UKT sedang diproses.')}
+            />
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+            <Text style={[styles.sectionHeading, { color: theme.text }]}>Daftar Mahasiswa</Text>
+            <TextInput
+              accessibilityLabel="Cari mahasiswa berdasarkan nama"
+              style={[
+                styles.searchInput,
+                {
+                  backgroundColor: theme.backgroundElement,
+                  borderColor: theme.textSecondary,
+                  color: theme.text,
+                },
+              ]}
+              placeholder="Cari nama mahasiswa..."
+              placeholderTextColor={theme.textSecondary}
+              value={keyword}
+              onChangeText={setKeyword}
+              autoCapitalize="none"
+              returnKeyType="search"
+            />
+          </View>
+        }
+        contentContainerStyle={styles.listContent}
+        keyboardShouldPersistTaps="handled"
+      />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
   safeArea: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+  listContent: {
+    width: '100%',
+    maxWidth: 800,
+    alignSelf: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 32,
   },
-  title: {
+  header: {
+    gap: 12,
+    marginBottom: 12,
+  },
+  heading: {
+    fontSize: 26,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  sectionHeading: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginTop: 12,
+  },
+  searchInput: {
+    minHeight: 48,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    fontSize: 16,
+  },
+  studentCard: {
+    borderRadius: 12,
+    marginBottom: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  studentName: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  studentProgram: {
+    fontSize: 14,
+    marginTop: 4,
+  },
+  emptyMessage: {
+    fontSize: 15,
+    paddingVertical: 16,
     textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
   },
 });
